@@ -1,0 +1,30 @@
+{
+  "float": [
+      {
+        "name": "user_name_font_size",
+        "value": "30px"
+      },
+      {
+        "name": "user_email_font_size",
+        "value": "20px"
+      },
+    {
+      "name": "login_textinput_padding",
+      "value": "20"
+    },
+
+    {
+      "name": "arclist_padding",
+      "value": "8px"
+    },
+    {
+      "name": "favorite_icon_size",
+      "value": "20"
+    },
+
+      {
+        "name": "watch_size",
+        "value": "466px"
+      }
+  ]
+}

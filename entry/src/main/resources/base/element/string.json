@@ -1,0 +1,88 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "label"
+    },
+    {
+      "name": "reason",
+      "value": "permission"
+    },
+    {
+      "name": "header_user_text",
+      "value": "User List"
+    },
+    {
+      "name": "header_favorites_text",
+      "value": "Favorites"
+    },
+    {
+      "name": "refresh_button_text",
+      "value": "refresh"
+    },
+    {
+      "name": "detail_button_text",
+      "value": "Detail Page"
+    },
+    {
+      "name": "logout_button_text",
+      "value": "Log out"
+    },
+    {
+      "name": "text_input_placeholder",
+      "value": "How many user want to get"
+    },
+    {
+      "name": "get_users_button_text",
+      "value": "Get Users Info"
+    },
+    {
+      "name": "insert_success_log",
+      "value": "✅ Inserted Successfully! Username:"
+    },
+    {
+      "name": "insert_failure_log",
+      "value": "❌ Failed to insert user."
+    },
+    {
+      "name": "click_log_prefix",
+      "value": "Clicked:"
+    },
+    {
+      "name": "username_placeholder",
+      "value": "Username"
+    },
+    {
+      "name": "password_placeholder",
+      "value": "Password"
+    },
+    {
+      "name": "login_button_text",
+      "value": "Log in"
+    },
+    {
+      "name": "empty_input_warning",
+      "value": "Username and password cannot be empty."
+    },
+    {
+      "name": "post_request_content_username",
+      "value": "emilys"
+    },
+    {
+      "name": "post_request_content_password",
+      "value": "emilyspass"
+    },
+    {
+      "name": "next_page_url_listing",
+      "value": "pages/Listing"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#FFFFFF"
+    },{
+      "name": "button_background_color",
+      "value": "#0B798B"
+    },
+    {
+      "name": "page_background_color",
+      "value": "#004C5D"
+    },
+    {
+      "name": "default_font_color",
+      "value": "#FFFFFF"
+    }
+  ]
+}
