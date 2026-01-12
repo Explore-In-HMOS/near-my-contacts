@@ -1,6 +1,6 @@
 {
   "app": {
-    "bundleName": "com.hmosdemos.NearMyContacts",
+    "bundleName": "com.hmosdemos.wearable.near_my_contacts",
     "vendor": "hmosdemos",
     "versionCode": 1000000,
     "versionName": "1.0.0",

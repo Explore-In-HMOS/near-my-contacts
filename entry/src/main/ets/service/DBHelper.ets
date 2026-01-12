@@ -14,9 +14,9 @@ export class DBHelper {
     }
 
     this.userTable = new Rdb(
-      DBConstants.User_Table.tableName,
-      DBConstants.User_Table.sqlCreate,
-      DBConstants.User_Table.columns,
+      DBConstants.USER_TABLE.tableName,
+      DBConstants.USER_TABLE.sqlCreate,
+      DBConstants.USER_TABLE.columns,
       DBHelper._applicationContext
     );
     this.userTable.getRdbStore();
@@ -69,7 +69,7 @@ export class DBHelper {
 
   async getAllUsers(callback: (users: UserRDB[]) => void): Promise<void> {
     this.getUserRDB(() => {
-      const predicates = new relationalStore.RdbPredicates(DBConstants.User_Table.tableName);
+      const predicates = new relationalStore.RdbPredicates(DBConstants.USER_TABLE.tableName);
       predicates.orderByDesc(DBConstants.ID_COLUMN);
       this.userTable.query(predicates, async (resultSet: relationalStore.ResultSet | null) => {
         if (!resultSet || resultSet.rowCount === 0) {

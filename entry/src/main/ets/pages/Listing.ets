@@ -1,10 +1,9 @@
 import { rcp } from '@kit.RemoteCommunicationKit';
 import { url } from '@kit.ArkTS';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { router } from '@kit.ArkUI';
 import Preferences from '../common/utils/Preferences'
 import { UserRDB } from '../model/RdbModel';
-import { User , RandomUserResponse } from '../model/UserModel'
+import { User, RandomUserResponse } from '../model/UserModel'
 import {
   ArcList,
   ArcListItem,
@@ -16,6 +15,15 @@ import {
 import { DBHelper } from '../service/DBHelper';
 import Logger from '../common/utils/Logger';
 import DBConstants from '../common/DBConstants';
+import { DETAIL_PAGE } from './Detail';
+import taskpool from '@ohos.taskpool';
+
+export const LISTING_PAGE = 'ListingPage';
+
+@Builder
+export function ListingPageBuilder() {
+  Listing();
+}
 
 export class NetworkQualityProvider {
   isNetworkFast: boolean = true
@@ -25,7 +33,7 @@ export class NetworkQualityProvider {
   }
 }
 
- class ResponseCache {
+class ResponseCache {
   private readonly cache: Record<string, rcp.Response> = {};
 
   getResponse(url: string): rcp.Response {
@@ -37,7 +45,7 @@ export class NetworkQualityProvider {
   }
 }
 
- class ResponseCachingInterceptor implements rcp.Interceptor {
+class ResponseCachingInterceptor implements rcp.Interceptor {
   private readonly cache: ResponseCache;
 
   constructor(cache: ResponseCache) {
@@ -70,13 +78,13 @@ export class RequestUrlChangeInterceptor implements rcp.Interceptor {
 
   async intercept(context: rcp.RequestContext, next: rcp.RequestHandler): Promise<rcp.Response> {
     if (context.request.method === 'GET' && !this.networkQualityProvider.isNetworkFast) {
-      console.log('[RequestUrlChangeInterceptor]: Slow network is detected');
+      console.info('[RequestUrlChangeInterceptor]: Slow network is detected');
       let parts = context.request.url.href
       parts = parts.replace(/results=\d+/, 'results=2');
       context.request.url = url.URL.parseURL(parts);
       return next.handle(context);
     } else {
-      console.log('[RequestUrlChangeInterceptor]: Network is fast');
+      console.info('[RequestUrlChangeInterceptor]: Network is fast');
     }
     return next.handle(context);
   }
@@ -84,27 +92,6 @@ export class RequestUrlChangeInterceptor implements rcp.Interceptor {
 
 const cache = new ResponseCache();
 
-async function testInterceptor() {
-
-  const session = rcp.createSession({
-    interceptors: [new ResponseCachingInterceptor(cache)]
-  });
-  await session.get("https://randomuser.me/api/?results=5").then((response: rcp.Response) => {
-    console.info(`Response succeeded: ${response}`);
-  }).catch((error: BusinessError) => {
-    console.error(`Response failed: error message is ${JSON.stringify(error)}`);
-  });
-
-  const kHttpServerAddress = "https://randomuser.me/api/?results=5";
-  const request = new rcp.Request(kHttpServerAddress, 'GET');
-
-
-  const response2 = await session.fetch(request).then((response: rcp.Response) => {
-    console.info(`Response : ${response}`);
-  }).catch((error: BusinessError) => {
-    console.error(`Response failed: error message is ${JSON.stringify(error)}`);
-  });
-}
 
 @Builder
 function buildText() {
@@ -117,14 +104,14 @@ function buildText() {
 }
 
 
-@Entry
 @Component
 struct Listing {
+  @Consume('NavPathStack') private pageStack: NavPathStack;
   dbHelper: DBHelper = DBHelper.getInstance();
   @State responseList: User[] = [];
   @State userList: UserRDB[] = [];
   @State requestNumber: string = '';
-  @State image: Resource = $r('app.media.unfavorite')
+  image: Resource = $r('app.media.unfavorite')
   private authToken: string = '';
   private watchSize: string = '4696px'
   private listSize: string = '414px'
@@ -152,15 +139,15 @@ struct Listing {
     Row() {
       Button({ type: ButtonType.Circle }) {
         Image(item.isFavorite ? $r('app.media.favorite') : $r('app.media.unfavorite'))
-          .width($r("app.float.favorite_icon_size"))
-          .height($r("app.float.favorite_icon_size"))
+          .width($r('app.float.favorite_icon_size'))
+          .height($r('app.float.favorite_icon_size'))
       }
       .onClick(() => {
-        animateTo({
+          this.getUIContext()?.animateTo({
           duration: 1000,
           curve: Curve.Smooth,
           iterations: 1,
-          playMode: PlayMode.Normal,
+          playMode: PlayMode.Normal
         }, () => {
           const index = this.userList.findIndex(u => u.email === item.email);
           const updatedUser: UserRDB = {
@@ -208,7 +195,7 @@ struct Listing {
       .focusOnTouch(true)
       .backgroundColor($r('app.color.button_background_color'))
       .onClick(() => {
-        console.log(`Clicked: ${user}`);
+        console.info(`Clicked: ${user}`);
       })
     }.align(Alignment.Center)
     .swipeAction({
@@ -221,107 +208,107 @@ struct Listing {
   }
 
   build() {
-    RelativeContainer() {
-      ArcList({ initialIndex: 0, header: this.header }) {
-        ForEach(this.userList, (user: UserRDB) => {
-          this.ListCardItem(user)
-        },(item: string, index: number) => item)
-        ArcListItem() {
-          Button($r('app.string.refresh_button_text'))
-            .width(this.listSize)
-            .height('100px')
-            .focusable(true)
-            .focusOnTouch(true)
-            .backgroundColor($r('app.color.button_background_color'))
+    NavDestination() {
+      RelativeContainer() {
+        ArcList({ initialIndex: 0, header: this.header }) {
+          ForEach(this.userList, (user: UserRDB) => {
+            this.ListCardItem(user)
+          }, (item: string, index: number) => item)
+          ArcListItem() {
+            Button($r('app.string.refresh_button_text'))
+              .width(this.listSize)
+              .height('100px')
+              .focusable(true)
+              .focusOnTouch(true)
+              .backgroundColor($r('app.color.button_background_color'))
+              .onClick(() => {
+                this.userList = []
+                this.getValues()
+              })
+          }
+
+          ArcListItem() {
+            Button($r('app.string.detail_button_text'))
+              .width(this.listSize)
+              .height('100px')
+              .focusable(true)
+              .focusOnTouch(true)
+              .backgroundColor($r('app.color.button_background_color'))
+              .onClick(() => {
+                this.pageStack.pushPath({
+                  name: DETAIL_PAGE
+                })
+              })
+          }
+
+          ArcListItem() {
+            Button($r('app.string.logout_button_text'))
+              .width(this.listSize)
+              .height('100px')
+              .focusable(true)
+              .focusOnTouch(true)
+              .backgroundColor($r('app.color.button_background_color'))
+              .onClick(() => {
+                Preferences.instance.putPreference('')
+                this.pageStack.pop()
+              })
+          }
+        }
+        .height('100%')
+        .width('100%')
+        .backgroundColor($r('app.color.page_background_color'))
+        .space(LengthMetrics.px(10))
+        .borderRadius($r('app.float.watch_size'))
+        .focusable(true)
+        .focusOnTouch(true)
+        .defaultFocus(true)
+        .visibility(this.responseList.length > 0 ? Visibility.Visible : Visibility.Hidden)
+
+        Column() {
+          TextInput({
+            placeholder: $r('app.string.text_input_placeholder'),
+            text: this.requestNumber
+          })
+            .onChange((value: string) => {
+              this.requestNumber = value
+            })
+            .type(InputType.Number)
+            .fontSize(15)
+            .fontWeight(FontWeight.Bold)
+            .visibility(this.responseList.length === 0 ? Visibility.Visible : Visibility.Hidden)
+            .margin({ bottom: 10 })
+            .width('80%')
+
+          Button($r('app.string.get_users_button_text'))
             .onClick(() => {
-              this.userList = []
               this.getValues()
-            })
+            }).backgroundColor($r('app.color.button_background_color'))
+            .visibility(this.responseList.length === 0 ? Visibility.Visible : Visibility.Hidden)
         }
+        .position({
+          top: 0,
+          bottom: 0,
+          left: 0,
+          right: 0
+        })
+        .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
+        .zIndex(10)
+        .width(this.responseList.length === 0 ? '100%' : '0')
+        .height(this.responseList.length === 0 ? '100%' : '0')
+        .visibility(this.responseList.length === 0 ? Visibility.Visible : Visibility.Hidden)
 
-        ArcListItem() {
-          Button($r('app.string.detail_button_text'))
-            .width(this.listSize)
-            .height('100px')
-            .focusable(true)
-            .focusOnTouch(true)
-            .backgroundColor($r('app.color.button_background_color'))
-            .onClick(() => {
-              router.pushUrl({
-                url: 'pages/Detail'
-              })
-            })
-        }
-
-        ArcListItem() {
-          Button($r('app.string.logout_button_text'))
-            .width(this.listSize)
-            .height('100px')
-            .focusable(true)
-            .focusOnTouch(true)
-            .backgroundColor($r('app.color.button_background_color'))
-            .onClick(() => {
-              Preferences.instance.putPreference('')
-              router.pushUrl({
-                url: 'pages/Index'
-              }).then(() => {
-
-              })
-            })
-        }
       }
       .height('100%')
       .width('100%')
       .backgroundColor($r('app.color.page_background_color'))
-      .space(LengthMetrics.px(10))
-      .borderRadius($r('app.float.watch_size'))
-      .focusable(true)
-      .focusOnTouch(true)
-      .defaultFocus(true)
-      .visibility(this.responseList.length > 0 ? Visibility.Visible : Visibility.Hidden)
-
-      Column() {
-        TextInput({
-          placeholder: $r('app.string.text_input_placeholder'),
-          text: this.requestNumber
-        })
-          .onChange((value: string) => {
-            this.requestNumber = value
-          })
-          .type(InputType.Number)
-          .fontSize(15)
-          .fontWeight(FontWeight.Bold)
-          .visibility(this.responseList.length === 0 ? Visibility.Visible : Visibility.Hidden)
-          .margin({ bottom: 10 })
-          .width('80%')
-
-        Button($r('app.string.get_users_button_text'))
-          .onClick(() => {
-            this.getValues()
-          }).backgroundColor($r('app.color.button_background_color'))
-          .visibility(this.responseList.length === 0 ? Visibility.Visible : Visibility.Hidden)
-      }
-      .position({
-        top: 0,
-        bottom: 0,
-        left: 0,
-        right: 0
-      })
-      .justifyContent(FlexAlign.Center)
-      .alignItems(HorizontalAlign.Center)
-      .zIndex(10)
-      .width(this.responseList.length === 0 ? '100%' : '0')
-      .height(this.responseList.length === 0 ? '100%' : '0')
-      .visibility(this.responseList.length === 0 ? Visibility.Visible : Visibility.Hidden)
-
     }
-    .height('100%')
-    .width('100%')
-    .backgroundColor($r('app.color.page_background_color'))
+    .hideTitleBar(true)
+    .mode(NavDestinationMode.STANDARD)
   }
 
   getValues() {
-    let kHttpServerAddress = "https://randomuser.me/api/?results=5";
+    let kHttpServerAddress =  $r('app.string.freeapi') + `/api/?results=5`;
     kHttpServerAddress = kHttpServerAddress.replace(/results=\d+/, `results=${this.requestNumber}`);
     const request = new rcp.Request(kHttpServerAddress, 'GET');
     const networkStateSimulator = new NetworkQualityProvider(true);
@@ -331,29 +318,21 @@ struct Listing {
         new RequestUrlChangeInterceptor(networkStateSimulator)
       ]
     });
-    session.fetch(request).then((response: rcp.Response) => {
+
+    session.fetch(request).then(async (response: rcp.Response) => {
       console.info(`Response succeeded: ${response}`);
+      const val = response.toJSON() as RandomUserResponse
+      this.responseList = val.results;
+      const task = new taskpool.Task(processRespTask,'',val);
+      const userRDBList = (await taskpool.execute(task)) as UserRDB[];
+      this.userList = userRDBList;
       return response.toJSON() as Promise<RandomUserResponse>;
-    }).then((data: RandomUserResponse) => {
-      this.responseList = data.results;
-      this.responseList.forEach((user: User) => {
-        const userRdb = {
-          gender: user.gender,
-          name: user.name.first,
-          adress: user.location.street.name,
-          email: user.email,
-          phone: user.phone,
-          isFavorite: false
-        } as UserRDB;
-        this.userList.push(userRdb)
-        console.info(`Name: ${user.name.first} ${user.name.last}, Email: ${user.email}`);
-      });
-      console.info('Response succeeded:', JSON.stringify(this.responseList));
     }).catch((error: BusinessError) => {
       console.error(`Response failed: error message is ${JSON.stringify(error)}`);
     });
 
   }
+
 
   onUserSaved(user: UserRDB) {
     this.dbHelper.insertUser(user, (success: boolean) => {
@@ -366,7 +345,7 @@ struct Listing {
   }
 
   onUserDeleted(user: UserRDB) {
-    this.dbHelper.deleteByName(user.name, DBConstants.User_Table.tableName, () => {
+    this.dbHelper.deleteByName(user.name, DBConstants.USER_TABLE.tableName, () => {
     })
   }
 
@@ -396,3 +375,22 @@ struct Listing {
       .slide(SlideEffect.Right)
   }
 }
+
+@Concurrent
+function processRespTask(err: BusinessError, data: RandomUserResponse) {
+  if (err) {
+    return [];
+  }
+
+  const result: UserRDB[] = data.results.map((user: User) => ({
+    gender: user.gender,
+    name: user.name.first,
+    adress: user.location.street.name,
+    email: user.email,
+    phone: user.phone,
+    isFavorite: false
+  } as UserRDB));
+
+  return result;
+}
+

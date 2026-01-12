@@ -46,7 +46,6 @@ export default class Rdb {
       callback();
       return
     }
-    // Use the context provided in the constructor instead of getContext(this)
     relationalStore.getRdbStore(this.context, DBConstants.STORE_CONFIG, (err, rdb) => {
       if (err) {
         Logger.error(DBConstants.RDB_TAG, `gerRdbStore() failed, err: ${err.message}`);
@@ -80,7 +79,7 @@ export default class Rdb {
       Logger.info(DBConstants.RDB_TAG, 'deleteData() has no callback!');
       return;
     }
-    let resFlag: boolean = false;
+    const resFlag: boolean = false;
     if (this.rdbStore) {
       this.rdbStore.delete(predicates, (err, ret) => {
         if (err) {

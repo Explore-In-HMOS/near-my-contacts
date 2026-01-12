@@ -1,4 +1,5 @@
 import preferences from '@ohos.data.preferences';
+import common from '@ohos.app.ability.common';
 
 const PREFERENCES_NAME = 'favourites.db';
 let authTokenPreferences: preferences.Preferences | null = null;
@@ -8,17 +9,23 @@ export default class Preferences {
   static instance = new Preferences();
   authToken: string = '';
 
-  constructor() {
-    this.initialize();
+  private constructor() {}
+
+
+  static async getInstance(context: common.UIAbilityContext): Promise<Preferences> {
+    if (!Preferences.instance) {
+      Preferences.instance = new Preferences();
+      await Preferences.instance.initialize(context);
+    }
+    return Preferences.instance;
   }
 
-  async initialize() {
-    await this.getPreferencesFromStorage();
+  async initialize(context: common.UIAbilityContext) {
+    await this.getPreferencesFromStorage(context);
     this.authToken = this.getPreference();
   }
 
-  async getPreferencesFromStorage() {
-    const context = getContext(this) as Context;
+  async getPreferencesFromStorage(context: common.UIAbilityContext) {
     authTokenPreferences = await preferences.getPreferences(context, PREFERENCES_NAME);
   }
 

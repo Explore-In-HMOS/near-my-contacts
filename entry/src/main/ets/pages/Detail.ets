@@ -11,6 +11,13 @@ import {
   LengthMetrics
 } from '@kit.ArkUI'
 
+export const DETAIL_PAGE = 'DetailPage';
+
+@Builder
+export function DetailPageBuilder() {
+  Detail();
+}
+
 @Builder
 function buildText() {
   Column() {
@@ -22,7 +29,6 @@ function buildText() {
 }
 
 
-@Entry
 @Component
 struct Detail {
   dbHelper: DBHelper = DBHelper.getInstance();
@@ -66,19 +72,23 @@ struct Detail {
   }
 
   build() {
-    ArcList({ initialIndex: 0, header: this.header }) {
-      ForEach(this.userList, (user: UserRDB) => {
-        this.ListCardItem(user)
-      },(item: string, index: number) => item)
+    NavDestination() {
+      ArcList({ initialIndex: 0, header: this.header }) {
+        ForEach(this.userList, (user: UserRDB) => {
+          this.ListCardItem(user)
+        }, (item: string, index: number) => item)
+      }
+      .height('100%')
+      .width('100%')
+      .backgroundColor('#004C5D')
+      .space(LengthMetrics.px(10))
+      .borderRadius(this.watchSize)
+      .focusable(true)
+      .focusOnTouch(true)
+      .defaultFocus(true)
     }
-    .height('100%')
-    .width('100%')
-    .backgroundColor('#004C5D')
-    .space(LengthMetrics.px(10))
-    .borderRadius(this.watchSize)
-    .focusable(true)
-    .focusOnTouch(true)
-    .defaultFocus(true)
+    .hideTitleBar(true)
+    .mode(NavDestinationMode.STANDARD)
   }
 
   pageTransition() {
@@ -108,9 +118,9 @@ struct Detail {
   }
 
   onUserDeleted(user: UserRDB) {
-    this.dbHelper.deleteByName(user.name, DBConstants.User_Table.tableName, () => {
+    this.dbHelper.deleteByName(user.name, DBConstants.USER_TABLE.tableName, () => {
       this.dbHelper.getAllUsers((users: UserRDB[]) => {
-        console.log(users[0].name)
+        console.info(users[0].name)
         this.userList = [...users]
       })
     })

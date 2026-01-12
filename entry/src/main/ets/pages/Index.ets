@@ -1,7 +1,12 @@
 import { rcp } from '@kit.RemoteCommunicationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { router, promptAction } from '@kit.ArkUI';
+import { promptAction } from '@kit.ArkUI';
+import common from '@ohos.app.ability.common';
 import Preferences from '../common/utils/Preferences'
+import { ListingPageBuilder, LISTING_PAGE } from './Listing';
+import { DetailPageBuilder, DETAIL_PAGE } from './Detail';
+import taskpool from '@ohos.taskpool';
+import { http } from '@kit.NetworkKit';
 
 export interface AuthResponse {
   accessToken: string;
@@ -18,109 +23,137 @@ export interface AuthResponse {
 @Entry
 @Component
 struct LoginPage {
+  @Provide('NavPathStack') pageStack: NavPathStack = new NavPathStack()
   @State password: string = '';
   private username: string = '';
   private authToken: string = '';
   @State color: Color = Color.Red
+  isPreferencesReady: boolean = false;
 
-  aboutToDisappear(): void {
-    Preferences.instance.off();
-  }
-
-  onPageShow(): void {
-    this.getOrUpdatePreferences();
-    if (this.authToken != '') {
-      router.pushUrl({ url: 'pages/Listing' }).then(() => {
-        console.info('Succeeded in jumping to the second page.')
-      })
+  @Builder
+  PagesMap(name: string) {
+    if (name === LISTING_PAGE) {
+      ListingPageBuilder();
+    } else if (name === DETAIL_PAGE) {
+      DetailPageBuilder();
     }
   }
 
-  getOrUpdatePreferences() {
-    this.authToken = Preferences.instance.getPreference();
-    console.log('authtoken', this.authToken)
+
+  async aboutToAppear() {
+    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    await Preferences.getInstance(context);
+    this.isPreferencesReady = true;
+  }
+
+  aboutToDisappear(): void {
+    Preferences.instance?.off();
+  }
+
+  async onPageShow() {
+    if (this.isPreferencesReady) {
+      await this.getOrUpdatePreferences();
+      if (this.authToken !== '') {
+        this.pageStack.pushPath({
+          name: LISTING_PAGE
+        })
+      }
+    }
+  }
+
+  async getOrUpdatePreferences() {
+    if (Preferences.instance) {
+      this.authToken = Preferences.instance.getPreference();
+      console.info('authtoken', this.authToken)
+    }
   }
 
   build() {
-    Column({ space: 12 }) {
+    Navigation(this.pageStack) {
+      Column({ space: 12 }) {
 
-      TextInput({
-        placeholder: 'Username',
-        text: 'emilys',
-      })
-        .onChange((value: string) => {
-          this.username = value
-        }).type(InputType.USER_NAME)
-        .margin({
-          top: 20
-        }
-        )
-
-      TextInput({
-        placeholder: 'Password',
-        text: 'emilyspass',
-      })
-        .onChange((value: string) => {
-          this.password = value
-          if (this.password.length > 3) {
-            this.color = Color.Green
-          } else {
-            this.color = Color.Red
+        TextInput({
+          placeholder: 'Username',
+          text: 'emilys'
+        })
+          .onChange((value: string) => {
+            this.username = value
+          }).type(InputType.USER_NAME)
+          .margin({
+            top: 20
           }
-        }).type(InputType.Password)
-        .maxLength(15)
+          )
 
-      Button($r('app.string.login_button_text'))
-        .onClick(() => {
-          if (this.username && this.password != '') {
-            this.postTransferSyn()
-          } else {
-            promptAction.showToast({
-              message: $r('app.string.empty_input_warning'),
-              duration: 1000,
-              showMode: promptAction.ToastShowMode.DEFAULT,
-              bottom: 130
-            })
+        TextInput({
+          placeholder: 'Password',
+          text: 'emilyspass'
+        })
+          .onChange((value: string) => {
+            this.password = value
+            if (this.password.length > 3) {
+              this.color = Color.Green
+            } else {
+              this.color = Color.Red
+            }
+          }).type(InputType.Password)
+          .maxLength(15)
+
+        Button($r('app.string.login_button_text'))
+          .onClick(() => {
+            if (this.username && this.password !== '') {
+              this.postTransferSyn()
+            } else {
+              promptAction.openToast({
+                message: $r('app.string.empty_input_warning'),
+                duration: 1000,
+                showMode: promptAction.ToastShowMode.DEFAULT,
+                bottom: 130
+              })
+            }
           }
-        }
-        ).backgroundColor($r('app.color.button_background_color'))
-    }.padding($r('app.float.login_textinput_padding'))
-    .backgroundColor($r('app.color.button_background_color'))
-    .height('100%')
+          ).backgroundColor($r('app.color.button_background_color'))
+      }.padding($r('app.float.login_textinput_padding'))
+      .backgroundColor($r('app.color.button_background_color'))
+      .height('100%')
+    }
+    .mode(NavigationMode.Stack)
+    .hideTitleBar(true)
+    .navDestination(this.PagesMap)
+    .hideBackButton(true)
+    .ignoreLayoutSafeArea()
   }
 
   private postTransferSyn = async () => {
-    const postURL = 'https://dummyjson.com/auth/login';
-    let headers: rcp.RequestHeaders = {
-      "Content-Type": "application/json"
+    const postURL = $r('app.string.dummyjson') + '/auth/login';
+    const headers: rcp.RequestHeaders = {
+      'Content-Type': 'application/json'
     };
-    const postContent: rcp.RequestContent =
+    const postContent =
       JSON.stringify({
-        "username": this.username,
-        "password": this.password,
-        "expiresInMins": 30
+        'username': this.username,
+        'password': this.password,
+        'expiresInMins': 30
       });
 
-    const sessions = rcp.createSession();
-    let req = new rcp.Request(postURL, "POST", headers, postContent);
 
-    sessions.fetch(req).then((response) => {
-      console.info(`Response ${response}`);
-      return response.toJSON() as Promise<AuthResponse>;
-    }).then((data: AuthResponse) => {
-      this.authToken = data.accessToken
-      console.info('Response succeeded:', JSON.stringify(this.authToken));
-      if (this.authToken != '') {
-        Preferences.instance.putPreference(data.accessToken)
-        router.pushUrl({ url: 'pages/Listing' }).then(() => {
-          console.info('Succeeded in jumping to the second page.')
+    const httpRequest = http.createHttp();
+    httpRequest.request(postURL, {
+      method : http.RequestMethod.POST,
+      header : {
+        'Content-Type' : 'application/json'
+      },
+      extraData : postContent
+    }, async (err: Error, data: http.HttpResponse) => {
+      const task = new taskpool.Task(processRespTask, err,data);
+      const isLogin = await taskpool.execute(task);
+      if (isLogin) {
+        this.pageStack.pushPath({
+          name : LISTING_PAGE
         })
       }
-    }).catch((error: BusinessError) => {
-      console.error(`Response failed: error message is ${JSON.stringify(error)}`);
     });
-
   };
+
 
   pageTransition() {
     PageTransitionEnter({
@@ -129,7 +162,7 @@ struct LoginPage {
     })
       .slide(SlideEffect.Right)
 
-    PageTransitionEnter({
+    PageTransitionEnter( {
       type: RouteType.Pop,
       duration: 600
     })
@@ -148,3 +181,16 @@ struct LoginPage {
       .slide(SlideEffect.Right)
   }
 }
+
+
+@Concurrent
+function processRespTask(err: BusinessError, data: http.HttpResponse) {
+  if (!err) {
+  return true
+  } else {
+   return false
+  }
+
+}
+
+

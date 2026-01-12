@@ -6,14 +6,25 @@ NearMyContacts is a demo application that fetches nearby user data from a remote
 # Preview
 
 <p align="left">
-  <img src="images/k4u.png" width="24%">
-  <img src="images/k2u.png" width="24%">
-  <img src="images/k1u.png" width="24%">
-  <img src="images/k3u.png" width="24%">
+  <img src="screenshots/k4u.png" width="24%">
+  <img src="screenshots/k2u.png" width="24%">
+  <img src="screenshots/k1u.png" width="24%">
+  <img src="screenshots/k3u.png" width="24%">
 </p>
 
 # Use Cases
 NearMyContacts fetches nearby user data from a remote API.
+
+# Tech Stack
+ 
+**Languages**: ArkTS, ArkUI  
+**Frameworks**: HarmonyOS SDK 5.1.0
+**Tools**: DevEco Studio 5.1.0
+**Libraries/Kits**:
+- @kit.RemoteCommunicationKit
+- @kit.ArkUI
+- @kit.NetworkKit
+- @kit.ArkData
 
 # Directory Structure
   ```

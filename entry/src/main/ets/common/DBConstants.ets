@@ -11,7 +11,7 @@ export default class DBConstants {
     name: 'user.db',
     securityLevel: relationalStore.SecurityLevel.S1
   };
-  static readonly User_Table: TableDefinition = {
+  static readonly USER_TABLE: TableDefinition = {
     tableName: 'UserInfo',
     sqlCreate: `CREATE TABLE IF NOT EXISTS UserInfo (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

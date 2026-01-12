@@ -83,6 +83,14 @@
     {
       "name": "next_page_url_listing",
       "value": "pages/Listing"
+    },
+    {
+      "name": "freeapi",
+      "value": "https://randomuser.me"
+    },
+    {
+      "name": "dummyjson",
+      "value": "https://dummyjson.com"
     }
   ]
 }
