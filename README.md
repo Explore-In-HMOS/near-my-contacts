@@ -1,4 +1,4 @@
-> **Note:** To access all shared projects, get information about environment setup, and view other guides, please visit [Explore-In-HMOS-Wearable Index](https://github.com/Explore-In-HMOS-Wearable/hmos-index).
+> **Note:** To access all shared projects, get information about environment setup, and view other guides, please visit [Explore-In-HMOS Index](https://github.com/Explore-In-HMOS/hmos-index).
 
 # NearMyContacts
 NearMyContacts is a demo application that fetches nearby user data from a remote API and displays it using ArcList components. Users can mark profiles as favorites, which are stored locally in a relational database. The app also provides a favorites page where saved users can be viewed or removed.
